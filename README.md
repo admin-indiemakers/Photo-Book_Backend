@@ -137,7 +137,7 @@ extra wiring needed.
 - Fonts: **Sora** (display/headings), **Inter** (body/tables), **JetBrains Mono**
   (order numbers, SKUs).
 
-## Tech stackk
+## Tech stack
 
 React 18 (Vite) · Tailwind CSS · Recharts · lucide-react · Express · Supabase
 (Postgres + Auth + Storage)
