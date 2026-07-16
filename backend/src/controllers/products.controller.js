@@ -159,3 +159,20 @@ export async function uploadProductImage(req, res, next) {
     next(err);
   }
 }
+
+// POST /api/products/calculate-quote
+export async function calculateQuote(req, res, next) {
+  try {
+    const { size, weight, initialPrice } = req.body;
+    
+    // Server-side authority calculation
+    const sizeMultiplier = 1 + (Number(size) - 50) * 0.01;
+    const weightMultiplier = 1 + (Number(weight) - 50) * 0.005;
+    
+    const quote = Math.round(Number(initialPrice) * sizeMultiplier * weightMultiplier);
+    
+    res.json({ quote });
+  } catch (err) {
+    next(err);
+  }
+}
