@@ -1,12 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import AdminLayout from '../components/Layout/AdminLayout.jsx';
-import StatusBadge from '../components/StatusBadge.jsx';
 import api from '../lib/api.js';
 
-const STATUS_FILTERS = ['all', 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-const LIMIT = 15;
+const PIPELINE_STAGES = [
+  { id: 'pending', label: 'Digital Proofing' },
+  { id: 'confirmed', label: 'In Print' },
+  { id: 'processing', label: 'Binding' },
+  { id: 'shipped', label: 'Quality Check' },
+  { id: 'delivered', label: 'Ready to Ship' }
+];
 
 function formatCurrency(n) {
   return `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -15,16 +21,12 @@ function formatCurrency(n) {
 export default function Orders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const params = { page, limit: LIMIT };
-    if (status !== 'all') params.status = status;
+    const params = { limit: 50 }; 
     if (search) params.search = search;
 
     const timeout = setTimeout(() => {
@@ -32,125 +34,139 @@ export default function Orders() {
         .get('/orders', { params })
         .then((res) => {
           setOrders(res.data.orders);
-          setTotal(res.data.total);
         })
         .finally(() => setLoading(false));
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [page, status, search]);
+  }, [search]);
 
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
+  const onDragEnd = useCallback((result) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+    // Find the order being moved
+    const movedOrder = orders.find(o => o.id === draggableId);
+    if (!movedOrder) return;
+
+    const originalStatus = movedOrder.status;
+    const newStatus = destination.droppableId;
+
+    // Optimistically update local state
+    setOrders(prev => prev.map(o => 
+      o.id === draggableId ? { ...o, status: newStatus } : o
+    ));
+
+    // Persist to backend
+    api.patch(`/orders/${draggableId}`, { status: newStatus })
+      .catch((err) => {
+        console.error('Failed to update order status', err);
+        // Revert on failure (with optional toast if you had a toast provider)
+        setOrders(prev => prev.map(o => 
+          o.id === draggableId ? { ...o, status: originalStatus } : o
+        ));
+      });
+  }, [orders]);
+
+  const getOrdersForStage = (stageId) => {
+    return orders.filter(o => o.status === stageId);
+  };
 
   return (
-    <AdminLayout title="Orders" subtitle={`${total} order${total === 1 ? '' : 's'} in total`}>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="relative w-full max-w-xs">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+    <AdminLayout title="The Print Room" subtitle="Manufacturing pipeline & order routing">
+      <div className="mb-10 flex items-center justify-between border-b border-border pb-4">
+        <div className="relative w-full max-w-sm">
+          <Search size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-muted" />
           <input
-            className="input-field pl-9"
-            placeholder="Search by order number…"
+            className="w-full bg-transparent pl-8 py-2 text-sm font-functional text-ink placeholder:text-muted focus:outline-none"
+            placeholder="Search manifest by order number…"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+      </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((s) => (
-            <button
-              key={s}
-              onClick={() => {
-                setStatus(s);
-                setPage(1);
-              }}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition ${
-                status === s ? 'bg-brand-500 text-white' : 'bg-white text-muted hover:bg-brand-50 hover:text-brand-600'
-              } border border-border`}
-            >
-              {s}
-            </button>
-          ))}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex h-[calc(100vh-280px)] gap-6 overflow-x-auto pb-6">
+          {PIPELINE_STAGES.map((stage) => {
+            const stageOrders = getOrdersForStage(stage.id);
+            return (
+              <div key={stage.id} className="flex h-full min-w-[320px] flex-col rounded-sm bg-white border border-border shadow-paper">
+                <div className="border-b border-border bg-cream/50 px-5 py-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-editorial text-lg text-ink">{stage.label}</h3>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-[10px] text-white">
+                      {stageOrders.length}
+                    </span>
+                  </div>
+                </div>
+                
+                <Droppable droppableId={stage.id}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef} 
+                      {...provided.droppableProps}
+                      className={`flex-1 overflow-y-auto p-4 space-y-4 transition-colors ${snapshot.isDraggingOver ? 'bg-cream/50' : 'bg-cream/30'}`}
+                    >
+                      {loading ? (
+                         <div className="flex justify-center p-4">
+                           <div className="h-6 w-6 animate-spin rounded-full border-y border-ink" />
+                         </div>
+                      ) : (
+                        stageOrders.map((o, index) => (
+                          <Draggable key={o.id} draggableId={o.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{ ...provided.draggableProps.style }}
+                              >
+                                <motion.div
+                                  layout
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
+                                  onClick={() => navigate(`/orders/${o.id}`)}
+                                  className={`cursor-grab active:cursor-grabbing rounded-sm border border-border bg-white p-4 transition-shadow ${snapshot.isDragging ? 'shadow-lg ring-1 ring-brand-500' : 'shadow-sm'}`}
+                                >
+                                  <div className="flex items-center justify-between mb-3">
+                                    <span className="font-functional text-[10px] uppercase tracking-widest text-muted">
+                                      {o.order_number}
+                                    </span>
+                                    <span className="font-editorial font-bold text-ink text-sm">
+                                      {formatCurrency(o.total)}
+                                    </span>
+                                  </div>
+                                  <p className="font-editorial text-lg text-ink leading-tight mb-1">
+                                    {o.customers?.full_name || 'Guest User'}
+                                  </p>
+                                  <p className="font-functional text-xs text-muted">
+                                    Placed {new Date(o.placed_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                  </p>
+                                </motion.div>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))
+                      )}
+                      {provided.placeholder}
+                      
+                      {!loading && stageOrders.length === 0 && (
+                        <div className="flex h-32 items-center justify-center border border-dashed border-border text-center">
+                          <p className="font-functional text-xs uppercase tracking-widest text-muted">Empty Queue</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
         </div>
-      </div>
-
-      <div className="card overflow-hidden !p-0">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-border bg-cream/60 text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th className="px-5 py-3 font-semibold">Order</th>
-              <th className="px-5 py-3 font-semibold">Customer</th>
-              <th className="px-5 py-3 font-semibold">Placed on</th>
-              <th className="px-5 py-3 font-semibold">Total</th>
-              <th className="px-5 py-3 font-semibold">Payment</th>
-              <th className="px-5 py-3 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted">
-                  Loading orders…
-                </td>
-              </tr>
-            ) : orders.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-muted">
-                  No orders match these filters.
-                </td>
-              </tr>
-            ) : (
-              orders.map((o) => (
-                <tr
-                  key={o.id}
-                  onClick={() => navigate(`/orders/${o.id}`)}
-                  className="cursor-pointer border-b border-border last:border-0 hover:bg-brand-50/40"
-                >
-                  <td className="px-5 py-3.5 font-mono text-xs font-semibold text-ink">{o.order_number}</td>
-                  <td className="px-5 py-3.5">
-                    <p className="font-medium text-ink">{o.customers?.full_name}</p>
-                    <p className="text-xs text-muted">{o.customers?.email}</p>
-                  </td>
-                  <td className="px-5 py-3.5 text-muted">
-                    {new Date(o.placed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="px-5 py-3.5 font-semibold text-ink">{formatCurrency(o.total)}</td>
-                  <td className="px-5 py-3.5">
-                    <StatusBadge status={o.payment_status} />
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <StatusBadge status={o.status} />
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between text-sm text-muted">
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        <div className="flex gap-2">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="btn-secondary !px-3 !py-1.5 disabled:opacity-40"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="btn-secondary !px-3 !py-1.5 disabled:opacity-40"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
+      </DragDropContext>
     </AdminLayout>
   );
 }
