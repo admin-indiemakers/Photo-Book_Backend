@@ -1,0 +1,47 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
+import dotenv from 'dotenv';
+
+import authRoutes from './src/routes/auth.routes.js';
+import productsRoutes from './src/routes/products.routes.js';
+import ordersRoutes from './src/routes/orders.routes.js';
+import customersRoutes from './src/routes/customers.routes.js';
+import dashboardRoutes from './src/routes/dashboard.routes.js';
+import { errorHandler, notFound } from './src/middleware/errorHandler.js';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.ADMIN_FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: '2mb' }));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Basic rate limiting on the login endpoint to slow down brute force attempts.
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+app.use('/api/auth/login', loginLimiter);
+
+app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
+app.use('/api/customers', customersRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`PhotoLab admin API running on http://localhost:${PORT}`);
+});
