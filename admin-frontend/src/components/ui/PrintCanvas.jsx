@@ -16,8 +16,8 @@ export const PrintCanvas = ({ products, onEdit, onDelete }) => {
   }
 
   return (
-    <div className="bg-cream p-8 md:p-12 lg:p-16 border border-border shadow-paper rounded-sm">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
+    <div className="bg-cream p-6 md:p-10 lg:p-12 border border-border shadow-paper rounded-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
         <AnimatePresence>
           {products.map((product) => (
             <ProductCard 

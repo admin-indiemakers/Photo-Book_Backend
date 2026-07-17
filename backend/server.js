@@ -9,6 +9,7 @@ import authRoutes from './src/routes/auth.routes.js';
 import productsRoutes from './src/routes/products.routes.js';
 import ordersRoutes from './src/routes/orders.routes.js';
 import customersRoutes from './src/routes/customers.routes.js';
+import cartsRoutes from './src/routes/carts.routes.js';
 import dashboardRoutes from './src/routes/dashboard.routes.js';
 import { errorHandler, notFound } from './src/middleware/errorHandler.js';
 
@@ -37,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/customers', customersRoutes);
+app.use('/api/carts', cartsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.use(notFound);

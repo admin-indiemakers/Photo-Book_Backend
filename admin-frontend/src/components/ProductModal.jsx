@@ -25,8 +25,8 @@ const emptyForm = {
   is_customizable: true,
   images: [],
   attributes: {
-    shape: 'square',
-    size: '8x8 inch'
+    sizes: '8x8 inch',
+    supported_formats: ['.JPG', '.PNG']
   }
 };
 
@@ -49,7 +49,7 @@ export default function ProductModal({ product, onClose, onSaved }) {
         is_active: product.is_active,
         is_customizable: product.is_customizable,
         images: product.images || [],
-        attributes: product.attributes || { shape: 'square', size: '8x8 inch' }
+        attributes: product.attributes || { sizes: '8x8 inch', supported_formats: ['.JPG', '.PNG'] }
       });
     } else {
       setForm(emptyForm);
@@ -133,9 +133,9 @@ export default function ProductModal({ product, onClose, onSaved }) {
           animate={{ y: 0, scale: 1, opacity: 1 }}
           exit={{ y: 20, scale: 0.95, opacity: 0 }}
           transition={{ type: "spring", stiffness: 100, damping: 20 }}
-          className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-sm bg-white shadow-2xl border border-border"
+          className="flex flex-col overflow-hidden max-h-[90vh] w-full max-w-4xl rounded-sm bg-white shadow-2xl border border-border"
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-white/90 backdrop-blur-md px-8 py-6">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-border bg-white px-8 py-6">
             <div>
               <h2 className="font-editorial text-2xl text-ink leading-none">{product ? 'Edit Publication' : 'New Publication'}</h2>
               <p className="font-functional text-[10px] uppercase tracking-widest text-muted mt-2">Configure asset parameters</p>
@@ -145,8 +145,9 @@ export default function ProductModal({ product, onClose, onSaved }) {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="px-8 py-8 space-y-12">
-            {error && (
+          <div className="flex-1 overflow-y-auto min-h-0 px-8 py-8">
+            <form id="product-form" onSubmit={handleSubmit} className="space-y-12">
+              {error && (
               <div className="rounded-sm border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger font-functional">
                 {error}
               </div>
@@ -171,16 +172,12 @@ export default function ProductModal({ product, onClose, onSaved }) {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="label-text">Format (Shape)</label>
-                    <select className="input-field" value={form.attributes?.shape || 'square'} onChange={(e) => updateAttribute('shape', e.target.value)}>
-                      <option value="square">Square</option>
-                      <option value="portrait">Portrait</option>
-                      <option value="landscape">Landscape</option>
-                    </select>
+                    <label className="label-text">Available Sizes</label>
+                    <input className="input-field" value={form.attributes?.sizes || ''} onChange={(e) => updateAttribute('sizes', e.target.value)} placeholder="e.g. 3x3 to 13x19 inches" />
                   </div>
                   <div>
-                    <label className="label-text">Dimensions</label>
-                    <input className="input-field" value={form.attributes?.size || ''} onChange={(e) => updateAttribute('size', e.target.value)} placeholder="e.g. 8x8 inch" />
+                    <label className="label-text">Supported Formats (comma separated)</label>
+                    <input className="input-field" value={(form.attributes?.supported_formats || []).join(', ')} onChange={(e) => updateAttribute('supported_formats', e.target.value.split(',').map(s => s.trim()))} placeholder=".JPG, .PNG" />
                   </div>
                 </div>
                 <div>
@@ -192,21 +189,21 @@ export default function ProductModal({ product, onClose, onSaved }) {
               {/* Asset Preview / Image Upload */}
               <div>
                 <label className="label-text">Asset Photography</label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <label className="flex h-40 cursor-pointer flex-col items-center justify-center gap-3 rounded-sm border-2 border-dashed border-border bg-cream hover:border-brand-500 hover:text-brand-500 hover:bg-white transition-colors">
-                    {uploading ? <Loader2 size={24} className="animate-spin text-ink" /> : <ImagePlus size={24} className="text-muted" />}
-                    <span className="font-functional text-xs uppercase tracking-wider text-muted">Upload Media</span>
+                <div className="grid grid-cols-3 gap-4 mt-2">
+                  <label className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed border-border bg-cream hover:border-brand-500 hover:text-brand-500 hover:bg-white transition-colors">
+                    {uploading ? <Loader2 size={20} className="animate-spin text-ink" /> : <ImagePlus size={20} className="text-muted" />}
+                    <span className="font-functional text-[10px] uppercase tracking-wider text-muted">Upload Media</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                   </label>
                   {form.images.map((url) => (
-                    <div key={url} className="group relative h-40 overflow-hidden rounded-sm border border-border bg-cream">
+                    <div key={url} className="group relative h-32 overflow-hidden rounded-sm border border-border bg-cream">
                       <img src={url} alt="" className="h-full w-full object-cover mix-blend-multiply" />
                       <button
                         type="button"
                         onClick={() => removeImage(url)}
                         className="absolute inset-0 flex items-center justify-center bg-ink/50 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100"
                       >
-                        <X size={24} />
+                        <X size={20} />
                       </button>
                     </div>
                   ))}
@@ -260,16 +257,17 @@ export default function ProductModal({ product, onClose, onSaved }) {
                   </label>
                 </div>
             </div>
+            </form>
+          </div>
 
-            <div className="sticky bottom-0 -mx-8 -mb-8 flex justify-end gap-4 border-t border-border bg-white px-8 py-6">
-              <button type="button" onClick={onClose} className="btn-secondary">
-                Discard
-              </button>
-              <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? 'Processing...' : product ? 'Commit Changes' : 'Publish Asset'}
-              </button>
-            </div>
-          </form>
+          <div className="flex-shrink-0 flex justify-end gap-4 border-t border-border bg-white px-8 py-6">
+            <button type="button" onClick={onClose} className="btn-secondary">
+              Discard
+            </button>
+            <button type="submit" form="product-form" disabled={saving} className="btn-primary">
+              {saving ? 'Processing...' : product ? 'Commit Changes' : 'Publish Asset'}
+            </button>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

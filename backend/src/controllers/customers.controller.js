@@ -13,6 +13,7 @@ export async function listCustomers(req, res, next) {
     if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
 
     const { data, error, count } = await query.range(from, to);
+    console.log('Customer fetch from DB:', data, error);
     if (error) throw error;
 
     // Attach lifetime order count + spend for each customer (lightweight aggregate).

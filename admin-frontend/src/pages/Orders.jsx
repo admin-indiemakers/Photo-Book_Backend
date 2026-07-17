@@ -88,6 +88,33 @@ export default function Orders() {
         </div>
       </div>
 
+      <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
+          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Total Revenue</p>
+          <p className="font-editorial text-3xl text-brand-600">
+            {formatCurrency(orders.filter(o => o.status !== 'cancelled').reduce((acc, curr) => acc + (Number(curr.total) || 0), 0))}
+          </p>
+        </div>
+        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
+          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Total Orders (Sales)</p>
+          <p className="font-editorial text-3xl text-ink">
+            {orders.filter(o => o.status !== 'cancelled').length}
+          </p>
+        </div>
+        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
+          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Active Pipeline</p>
+          <p className="font-editorial text-3xl text-ink">
+            {orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length}
+          </p>
+        </div>
+        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
+          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Fulfillment Rate</p>
+          <p className="font-editorial text-3xl text-success">
+            {orders.length > 0 ? Math.round((orders.filter(o => o.status === 'delivered').length / orders.filter(o => o.status !== 'cancelled').length) * 100) : 0}%
+          </p>
+        </div>
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-[calc(100vh-280px)] gap-6 overflow-x-auto pb-6">
           {PIPELINE_STAGES.map((stage) => {
