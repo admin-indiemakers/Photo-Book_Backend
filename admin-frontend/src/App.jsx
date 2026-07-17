@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Orders from './pages/Orders.jsx';
 import OrderDetail from './pages/OrderDetail.jsx';
 import Customers from './pages/Customers.jsx';
+import Carts from './pages/Carts.jsx';
 import CustomerDetail from './pages/CustomerDetail.jsx';
 import Products from './pages/Products.jsx';
 import Profile from './pages/Profile.jsx';
@@ -31,6 +32,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <PageTransition locationKey="orders"><Orders /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/carts"
+          element={
+            <ProtectedRoute>
+              <PageTransition locationKey="carts"><Carts /></PageTransition>
             </ProtectedRoute>
           }
         />

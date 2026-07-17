@@ -223,13 +223,13 @@ export default function OrderDetail() {
           <div className="card">
             <h3 className="mb-3 text-sm font-semibold text-ink">Shipping address</h3>
             <p className="text-sm text-ink">
-              {order.shipping_address?.address_line1}
-              {order.shipping_address?.address_line2 ? `, ${order.shipping_address.address_line2}` : ''}
+              {order.address_line1 || 'No address provided'}
+              {order.address_line2 ? `, ${order.address_line2}` : ''}
             </p>
             <p className="text-sm text-muted">
-              {order.shipping_address?.city}, {order.shipping_address?.state} {order.shipping_address?.postal_code}
+              {order.city} {order.state ? `, ${order.state}` : ''} {order.postal_code}
             </p>
-            <p className="text-sm text-muted">{order.shipping_address?.country}</p>
+            <p className="text-sm text-muted">{order.country}</p>
           </div>
 
           <div className="card">

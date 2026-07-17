@@ -65,12 +65,19 @@ export const ProductCard = ({ product, onEdit, onDelete }) => {
           {product.category.replace('_', ' ')}
         </p>
         
-        {/* Dynamic Attributes (Size & Shape) */}
-        {product.attributes && (product.attributes.size || product.attributes.shape) && (
-          <div className="mt-2 flex items-center gap-2 font-functional text-[11px] text-muted uppercase tracking-wider bg-cream px-2 py-1 rounded-sm border border-border">
-             {product.attributes.shape && <span>{product.attributes.shape}</span>}
-             {product.attributes.shape && product.attributes.size && <span className="text-border">•</span>}
-             {product.attributes.size && <span>{product.attributes.size}</span>}
+        {/* Dynamic Attributes (Size & Formats) */}
+        {product.attributes && (product.attributes.sizes || product.attributes.supported_formats) && (
+          <div className="mt-2 flex flex-col items-center gap-1 font-functional text-[10px] text-muted uppercase tracking-wider bg-cream px-3 py-2 rounded-sm border border-border w-full">
+             {product.attributes.sizes && <div className="text-ink text-center w-full truncate" title={product.attributes.sizes}>{product.attributes.sizes}</div>}
+             {product.attributes.sizes && product.attributes.supported_formats && <div className="w-full border-t border-border my-1" />}
+             {product.attributes.supported_formats && (
+               <div className="flex flex-wrap justify-center gap-1">
+                 {product.attributes.supported_formats.slice(0, 4).map((f, i) => (
+                   <span key={i} className="bg-border/50 px-1 py-0.5 rounded">{f}</span>
+                 ))}
+                 {product.attributes.supported_formats.length > 4 && <span>+ more</span>}
+               </div>
+             )}
           </div>
         )}
 

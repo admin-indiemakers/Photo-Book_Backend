@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Package, ShoppingBag, Users, UserCircle, Images } from 'lucide-react';
+import { LayoutGrid, Package, ShoppingBag, Users, UserCircle, Images, ShoppingCart } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
-  { to: '/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/carts', label: 'Cart Management', icon: ShoppingCart },
+  { to: '/orders', label: 'Sales Management', icon: ShoppingBag },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/products', label: 'Products', icon: Package },
   { to: '/profile', label: 'Profile', icon: UserCircle },
