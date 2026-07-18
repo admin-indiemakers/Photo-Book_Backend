@@ -32,7 +32,7 @@ export default function Login() {
           <div className="film-edge mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-card">
             <Images size={26} strokeWidth={2.25} />
           </div>
-          <h1 className="font-display text-2xl font-bold">PhotoLab Admin</h1>
+          <h1 className="font-display text-2xl font-bold">Offline Living Admin</h1>
           <p className="mt-1 text-sm text-muted">Sign in to manage orders, products and customers.</p>
         </div>
 
@@ -50,7 +50,7 @@ export default function Login() {
               type="email"
               required
               className="input-field"
-              placeholder="you@photolab.com"
+              placeholder="you@offlineliving.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

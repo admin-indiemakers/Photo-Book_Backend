@@ -57,7 +57,7 @@ export default function Products() {
 
   return (
     <AdminLayout
-      title="Print Collection"
+      title="Products Management"
       subtitle="Curate and manage your physical assets"
       headerExtra={
         <button onClick={openAdd} className="btn-primary">

@@ -53,7 +53,15 @@ export default function Dashboard() {
     : [];
 
   return (
-    <AdminLayout title="Overview" subtitle="Executive summary & store performance">
+    <AdminLayout 
+      title="Overview" 
+      subtitle="Executive summary & store performance"
+      headerExtra={
+        <button className="flex items-center gap-2 rounded-sm bg-brand-500 px-4 py-2 font-functional text-[11px] font-bold uppercase tracking-widest text-white shadow-soft transition-colors hover:bg-brand-600">
+          Export Data
+        </button>
+      }
+    >
       {loading ? (
         <div className="flex h-64 items-center justify-center">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-border border-t-brand-500" />
