@@ -170,9 +170,15 @@ export default function Orders() {
                                   <p className="font-editorial text-lg text-ink leading-tight mb-1">
                                     {o.customers?.full_name || 'Guest User'}
                                   </p>
-                                  <p className="font-functional text-xs text-muted">
+                                  <p className="font-functional text-xs text-muted mb-3">
                                     Placed {new Date(o.placed_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                                   </p>
+                                  <div className="border-t border-border/50 pt-3">
+                                    <p className="font-functional text-[10px] uppercase tracking-widest text-muted mb-1 font-semibold">Delivery Details</p>
+                                    <p className="text-xs text-ink/80 truncate">{o.shipping_address?.address_line1 || 'No Address'}</p>
+                                    <p className="text-xs text-ink/80 truncate">{o.shipping_address?.city || ''} {o.shipping_address?.postal_code || ''}</p>
+                                    <p className="text-xs text-ink/80 truncate mt-1">Phone: {o.shipping_address?.phone || o.customers?.phone || 'N/A'}</p>
+                                  </div>
                                 </motion.div>
                               </div>
                             )}

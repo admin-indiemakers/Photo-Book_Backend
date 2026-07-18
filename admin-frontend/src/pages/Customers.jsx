@@ -36,7 +36,7 @@ export default function Customers() {
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
   return (
-    <AdminLayout title="Customer Directory" subtitle={`${total} client profiles in the registry`}>
+    <AdminLayout title="Customers Management" subtitle={`${total} client profiles in the registry`}>
       <div className="mb-8 relative w-full max-w-sm">
         <Search size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-muted" />
         <input

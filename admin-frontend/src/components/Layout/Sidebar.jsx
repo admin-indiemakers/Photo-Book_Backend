@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Package, ShoppingBag, Users, UserCircle, Images, ShoppingCart } from 'lucide-react';
+import { LayoutGrid, Package, ShoppingBag, Users, UserCircle, Images, ShoppingCart, LayoutTemplate } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
   { to: '/carts', label: 'Cart Management', icon: ShoppingCart },
-  { to: '/orders', label: 'Sales Management', icon: ShoppingBag },
-  { to: '/customers', label: 'Customers', icon: Users },
-  { to: '/products', label: 'Products', icon: Package },
+  { to: '/orders', label: 'Order Management', icon: ShoppingBag },
+  { to: '/customers', label: 'Customers Management', icon: Users },
+  { to: '/products', label: 'Products Management', icon: Package },
+  { to: '/templates', label: 'Layout Templates', icon: LayoutTemplate },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ];
 
@@ -20,7 +21,7 @@ export default function Sidebar() {
             <Images size={18} strokeWidth={2.25} />
           </div>
           <div>
-            <p className="font-display text-base font-bold leading-tight text-ink">PhotoLab</p>
+            <p className="font-display text-base font-bold leading-tight text-ink">Offline Living</p>
             <p className="text-[11px] font-medium uppercase tracking-wider text-brand-500">Admin Studio</p>
           </div>
         </div>
@@ -47,7 +48,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-border px-6 py-4">
-        <p className="text-[11px] text-muted">PhotoLab Admin v1.0</p>
+        <p className="text-[11px] text-muted">Offline Living Admin v1.0</p>
       </div>
     </aside>
   );
