@@ -1,17 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Search, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
 import AdminLayout from '../components/Layout/AdminLayout.jsx';
 import api from '../lib/api.js';
 
-const PIPELINE_STAGES = [
-  { id: 'pending', label: 'Digital Proofing' },
-  { id: 'confirmed', label: 'In Print' },
-  { id: 'processing', label: 'Binding' },
-  { id: 'shipped', label: 'Quality Check' },
-  { id: 'delivered', label: 'Ready to Ship' }
+const STATUS_OPTIONS = [
+  { id: 'pending', label: 'Pending' },
+  { id: 'confirmed', label: 'Confirmed' },
+  { id: 'processing', label: 'Processing' },
+  { id: 'shipped', label: 'Shipped' },
+  { id: 'delivered', label: 'Delivered' }
 ];
 
 function formatCurrency(n) {
@@ -41,41 +40,19 @@ export default function Orders() {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const onDragEnd = useCallback((result) => {
-    const { destination, source, draggableId } = result;
-
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
-    // Find the order being moved
-    const movedOrder = orders.find(o => o.id === draggableId);
-    if (!movedOrder) return;
-
-    const originalStatus = movedOrder.status;
-    const newStatus = destination.droppableId;
-
-    // Optimistically update local state
-    setOrders(prev => prev.map(o => 
-      o.id === draggableId ? { ...o, status: newStatus } : o
-    ));
-
-    // Persist to backend
-    api.patch(`/orders/${draggableId}`, { status: newStatus })
-      .catch((err) => {
-        console.error('Failed to update order status', err);
-        // Revert on failure (with optional toast if you had a toast provider)
-        setOrders(prev => prev.map(o => 
-          o.id === draggableId ? { ...o, status: originalStatus } : o
-        ));
-      });
-  }, [orders]);
-
-  const getOrdersForStage = (stageId) => {
-    return orders.filter(o => o.status === stageId);
+  const updateStatus = async (orderId, newStatus) => {
+    const originalOrder = orders.find(o => o.id === orderId);
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    try {
+      await api.patch(`/orders/${orderId}`, { status: newStatus });
+    } catch (err) {
+      console.error('Failed to update status', err);
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: originalOrder.status } : o));
+    }
   };
 
   return (
-    <AdminLayout title="The Print Room" subtitle="Manufacturing pipeline & order routing">
+    <AdminLayout title="Order Management" subtitle="View and manage all customer orders">
       <div className="mb-10 flex items-center justify-between border-b border-border pb-4">
         <div className="relative w-full max-w-sm">
           <Search size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-muted" />
@@ -88,118 +65,96 @@ export default function Orders() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
-          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Total Revenue</p>
-          <p className="font-editorial text-3xl text-brand-600">
-            {formatCurrency(orders.filter(o => o.status !== 'cancelled').reduce((acc, curr) => acc + (Number(curr.total) || 0), 0))}
-          </p>
-        </div>
-        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
-          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Total Orders (Sales)</p>
-          <p className="font-editorial text-3xl text-ink">
-            {orders.filter(o => o.status !== 'cancelled').length}
-          </p>
-        </div>
-        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
-          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Active Pipeline</p>
-          <p className="font-editorial text-3xl text-ink">
-            {orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length}
-          </p>
-        </div>
-        <div className="bg-white border border-border rounded-sm p-5 shadow-sm">
-          <p className="font-functional text-[10px] font-semibold uppercase tracking-widest text-muted mb-2">Fulfillment Rate</p>
-          <p className="font-editorial text-3xl text-success">
-            {orders.length > 0 ? Math.round((orders.filter(o => o.status === 'delivered').length / orders.filter(o => o.status !== 'cancelled').length) * 100) : 0}%
-          </p>
+      <div className="bg-white border border-border shadow-paper rounded-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm font-functional text-ink">
+            <thead className="bg-cream/50 border-b border-border text-[10px] uppercase tracking-widest text-muted">
+              <tr>
+                <th className="px-6 py-4 font-semibold">Order ID</th>
+                <th className="px-6 py-4 font-semibold">Delivery Details</th>
+                <th className="px-6 py-4 font-semibold">Products</th>
+                <th className="px-6 py-4 font-semibold">Amount</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center">
+                    <div className="flex justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-y border-ink" />
+                    </div>
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-muted font-functional text-xs uppercase tracking-widest">
+                    No orders found
+                  </td>
+                </tr>
+              ) : (
+                orders.map((o) => (
+                  <motion.tr 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    key={o.id} 
+                    className="hover:bg-cream/20 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="font-editorial text-base text-ink">{o.order_number}</div>
+                      <div className="text-[10px] uppercase tracking-widest text-muted mt-1">
+                        {new Date(o.placed_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 max-w-xs">
+                      <div className="font-semibold text-ink">{o.customers?.full_name || 'Guest User'}</div>
+                      <div className="text-xs text-ink/80 truncate mt-1">
+                        {o.shipping_address?.address_line1 || 'No Address'}, {o.shipping_address?.city || ''}
+                      </div>
+                      <div className="text-xs text-ink/80 truncate">
+                        {o.shipping_address?.phone || o.customers?.phone || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-ink">
+                        {o.order_items?.length || 0} item(s)
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-editorial font-bold text-brand-600 text-base">
+                      {formatCurrency(o.total)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={o.status}
+                        onChange={(e) => updateStatus(o.id, e.target.value)}
+                        className={`text-xs border border-border rounded-sm px-2 py-1 focus:outline-none focus:border-ink ${
+                          o.status === 'delivered' ? 'bg-success/10 text-success border-success/20' :
+                          o.status === 'pending' ? 'bg-brand-500/10 text-brand-600 border-brand-500/20' :
+                          o.status === 'cancelled' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                          'bg-cream text-ink'
+                        }`}
+                      >
+                        {STATUS_OPTIONS.map(opt => (
+                          <option key={opt.id} value={opt.id}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => navigate(`/orders/${o.id}`)}
+                        className="inline-flex items-center gap-2 rounded-md bg-ink px-3 py-1.5 font-functional text-[10px] font-bold uppercase tracking-widest text-white shadow-md transition-colors hover:bg-ink/80"
+                      >
+                        <Eye size={14} /> View Detail
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex h-[calc(100vh-280px)] gap-6 overflow-x-auto pb-6">
-          {PIPELINE_STAGES.map((stage) => {
-            const stageOrders = getOrdersForStage(stage.id);
-            return (
-              <div key={stage.id} className="flex h-full min-w-[320px] flex-col rounded-sm bg-white border border-border shadow-paper">
-                <div className="border-b border-border bg-cream/50 px-5 py-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-editorial text-lg text-ink">{stage.label}</h3>
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-[10px] text-white">
-                      {stageOrders.length}
-                    </span>
-                  </div>
-                </div>
-                
-                <Droppable droppableId={stage.id}>
-                  {(provided, snapshot) => (
-                    <div 
-                      ref={provided.innerRef} 
-                      {...provided.droppableProps}
-                      className={`flex-1 overflow-y-auto p-4 space-y-4 transition-colors ${snapshot.isDraggingOver ? 'bg-cream/50' : 'bg-cream/30'}`}
-                    >
-                      {loading ? (
-                         <div className="flex justify-center p-4">
-                           <div className="h-6 w-6 animate-spin rounded-full border-y border-ink" />
-                         </div>
-                      ) : (
-                        stageOrders.map((o, index) => (
-                          <Draggable key={o.id} draggableId={o.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                style={{ ...provided.draggableProps.style }}
-                              >
-                                <motion.div
-                                  layout
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.06)' }}
-                                  onClick={() => navigate(`/orders/${o.id}`)}
-                                  className={`cursor-grab active:cursor-grabbing rounded-sm border border-border bg-white p-4 transition-shadow ${snapshot.isDragging ? 'shadow-lg ring-1 ring-brand-500' : 'shadow-sm'}`}
-                                >
-                                  <div className="flex items-center justify-between mb-3">
-                                    <span className="font-functional text-[10px] uppercase tracking-widest text-muted">
-                                      {o.order_number}
-                                    </span>
-                                    <span className="font-editorial font-bold text-ink text-sm">
-                                      {formatCurrency(o.total)}
-                                    </span>
-                                  </div>
-                                  <p className="font-editorial text-lg text-ink leading-tight mb-1">
-                                    {o.customers?.full_name || 'Guest User'}
-                                  </p>
-                                  <p className="font-functional text-xs text-muted mb-3">
-                                    Placed {new Date(o.placed_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                                  </p>
-                                  <div className="border-t border-border/50 pt-3">
-                                    <p className="font-functional text-[10px] uppercase tracking-widest text-muted mb-1 font-semibold">Delivery Details</p>
-                                    <p className="text-xs text-ink/80 truncate">{o.shipping_address?.address_line1 || 'No Address'}</p>
-                                    <p className="text-xs text-ink/80 truncate">{o.shipping_address?.city || ''} {o.shipping_address?.postal_code || ''}</p>
-                                    <p className="text-xs text-ink/80 truncate mt-1">Phone: {o.shipping_address?.phone || o.customers?.phone || 'N/A'}</p>
-                                  </div>
-                                </motion.div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))
-                      )}
-                      {provided.placeholder}
-                      
-                      {!loading && stageOrders.length === 0 && (
-                        <div className="flex h-32 items-center justify-center border border-dashed border-border text-center">
-                          <p className="font-functional text-xs uppercase tracking-widest text-muted">Empty Queue</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
-            );
-          })}
-        </div>
-      </DragDropContext>
     </AdminLayout>
   );
 }

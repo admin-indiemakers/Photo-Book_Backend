@@ -3,10 +3,10 @@ import { LayoutGrid, Package, ShoppingBag, Users, UserCircle, Images, ShoppingCa
 
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutGrid, end: true },
-  { to: '/carts', label: 'Cart Management', icon: ShoppingCart },
-  { to: '/orders', label: 'Order Management', icon: ShoppingBag },
   { to: '/customers', label: 'Customers Management', icon: Users },
   { to: '/products', label: 'Products Management', icon: Package },
+  { to: '/orders', label: 'Order Management', icon: ShoppingBag },
+  { to: '/carts', label: 'Cart Management', icon: ShoppingCart },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ];
 

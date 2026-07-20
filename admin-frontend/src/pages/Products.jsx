@@ -74,7 +74,7 @@ export default function Products() {
           </button>
         ) : (
           <button onClick={openAdd} className="btn-primary">
-            <Plus size={16} /> New Asset
+            <Plus size={16} /> New Product
           </button>
         )
       }
