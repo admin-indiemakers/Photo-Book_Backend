@@ -23,7 +23,7 @@ const products = [
     name: 'Custom Photo Frames',
     category: 'photo_frame',
     description: 'Transform your digital memories into premium gallery-quality frames. Ready to hang, built to last.',
-    base_price: 90,
+    base_price: 135,
     stock_quantity: 500,
     is_active: true,
     is_customizable: true,
