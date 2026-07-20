@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ProductCard } from './ProductCard.jsx';
 import { ImageOff } from 'lucide-react';
 
-export const PrintCanvas = ({ products, onEdit, onDelete }) => {
+export const PrintCanvas = ({ products, onEdit, onDelete, onViewTemplates }) => {
   if (!products || products.length === 0) {
     return (
       <div className="card flex flex-col items-center justify-center py-24 text-center border-dashed">
@@ -22,7 +22,7 @@ export const PrintCanvas = ({ products, onEdit, onDelete }) => {
           {products.map((product) => (
             <ProductCard 
               key={product.id} 
-              product={product} 
+              product={{...product, onViewTemplates}} 
               onEdit={() => onEdit(product)}
               onDelete={() => onDelete(product)} 
             />
