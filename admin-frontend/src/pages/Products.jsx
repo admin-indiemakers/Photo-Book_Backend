@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import AdminLayout from '../components/Layout/AdminLayout.jsx';
 import ProductModal from '../components/ProductModal.jsx';
+import ProductTemplates from '../components/ProductTemplates.jsx';
 import { PrintCanvas } from '../components/ui/PrintCanvas.jsx';
 import api from '../lib/api.js';
 
@@ -21,6 +22,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingTemplates, setViewingTemplates] = useState(null);
 
   function load() {
     setLoading(true);
@@ -28,7 +30,13 @@ export default function Products() {
     if (category !== 'all') params.category = category;
     api
       .get('/products', { params })
-      .then((res) => setProducts(res.data.products))
+      .then((res) => {
+        setProducts(res.data.products);
+        if (viewingTemplates) {
+          const updated = res.data.products.find(p => p.id === viewingTemplates.id);
+          if (updated) setViewingTemplates(updated);
+        }
+      })
       .finally(() => setLoading(false));
   }
 
@@ -57,32 +65,23 @@ export default function Products() {
 
   return (
     <AdminLayout
-      title="Products Management"
-      subtitle="Curate and manage your physical assets"
+      title={viewingTemplates ? `Template Studio: ${viewingTemplates.name}` : "Products Management"}
+      subtitle={viewingTemplates ? "Design and manage page layouts for this product" : "Curate and manage your physical assets"}
       headerExtra={
-        <button onClick={openAdd} className="btn-primary">
-          <Plus size={16} /> New Asset
-        </button>
+        viewingTemplates ? (
+          <button onClick={() => setViewingTemplates(null)} className="btn-secondary">
+            Back to Products
+          </button>
+        ) : (
+          <button onClick={openAdd} className="btn-primary">
+            <Plus size={16} /> New Asset
+          </button>
+        )
       }
     >
-      {/* Editorial Category Filter */}
-      <div className="mb-10 flex flex-wrap gap-4 border-b border-border pb-4">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.value}
-            onClick={() => setCategory(c.value)}
-            className={`pb-2 text-xs font-functional uppercase tracking-widest transition-all ${
-              category === c.value 
-                ? 'border-b-2 border-ink text-ink font-bold' 
-                : 'border-b-2 border-transparent text-muted hover:text-ink'
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
+      {viewingTemplates ? (
+        <ProductTemplates product={viewingTemplates} onClose={() => setViewingTemplates(null)} onSaved={load} />
+      ) : loading ? (
         <div className="flex h-64 items-center justify-center">
            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-ink" />
         </div>
@@ -90,7 +89,8 @@ export default function Products() {
         <PrintCanvas 
           products={products} 
           onEdit={openEdit} 
-          onDelete={handleDelete} 
+          onDelete={handleDelete}
+          onViewTemplates={setViewingTemplates}
         />
       )}
 

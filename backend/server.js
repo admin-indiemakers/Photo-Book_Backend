@@ -11,6 +11,7 @@ import ordersRoutes from './src/routes/orders.routes.js';
 import customersRoutes from './src/routes/customers.routes.js';
 import cartsRoutes from './src/routes/carts.routes.js';
 import dashboardRoutes from './src/routes/dashboard.routes.js';
+import templatesRoutes from './src/routes/templates.routes.js';
 import { errorHandler, notFound } from './src/middleware/errorHandler.js';
 
 dotenv.config();
@@ -21,7 +22,13 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.ADMIN_FRONTEND_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      if (!origin || origin.startsWith('http://localhost:') || origin === process.env.ADMIN_FRONTEND_URL) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
@@ -39,11 +46,14 @@ app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/customers', customersRoutes);
 app.use('/api/carts', cartsRoutes);
+app.use('/api/templates', templatesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`PhotoLab admin API running on http://localhost:${PORT}`);
+  console.log(`🚀 PhotoLab admin API running on http://localhost:${PORT}`);
 });
+
+// Watcher trigger

@@ -88,6 +88,16 @@ export const ProductCard = ({ product, onEdit, onDelete }) => {
             {product.stock_quantity} available
           </span>
         </div>
+
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            if (product.onViewTemplates) product.onViewTemplates(product);
+          }}
+          className="mt-4 w-full py-2 bg-cream text-ink text-xs font-bold uppercase tracking-widest border border-border hover:bg-brand-50 hover:text-brand-600 transition-colors rounded-sm"
+        >
+          View Templates
+        </button>
       </div>
     </motion.div>
   );

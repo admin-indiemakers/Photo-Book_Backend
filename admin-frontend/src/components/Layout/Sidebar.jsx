@@ -7,7 +7,6 @@ const navItems = [
   { to: '/orders', label: 'Order Management', icon: ShoppingBag },
   { to: '/customers', label: 'Customers Management', icon: Users },
   { to: '/products', label: 'Products Management', icon: Package },
-  { to: '/templates', label: 'Layout Templates', icon: LayoutTemplate },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ];
 

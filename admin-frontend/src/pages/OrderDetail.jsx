@@ -156,6 +156,22 @@ export default function OrderDetail() {
                         View uploaded photo
                       </a>
                     )}
+                    {item.customization?.pdfData && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const blob = new Blob([JSON.stringify(item.customization.pdfData, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `photobook-layout-${item.id}.json`;
+                          a.click();
+                        }}
+                        className="mt-1 inline-block text-xs font-medium text-brand-600 underline"
+                      >
+                        Download Photobook Layout (JSON)
+                      </button>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-ink">{formatCurrency(item.line_total)}</p>

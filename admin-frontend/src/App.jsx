@@ -9,7 +9,6 @@ import Customers from './pages/Customers.jsx';
 import Carts from './pages/Carts.jsx';
 import CustomerDetail from './pages/CustomerDetail.jsx';
 import Products from './pages/Products.jsx';
-import Templates from './pages/Templates.jsx';
 import Profile from './pages/Profile.jsx';
 import { PageTransition } from './components/motion/PageTransition.jsx';
 
@@ -76,14 +75,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/templates"
-          element={
-            <ProtectedRoute>
-              <PageTransition locationKey="templates"><Templates /></PageTransition>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/profile"
           element={
