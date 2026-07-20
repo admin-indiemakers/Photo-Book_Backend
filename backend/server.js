@@ -49,10 +49,18 @@ app.use('/api/carts', cartsRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+app.get('/', (req, res) => {
+  res.send('<h1>PhotoBook Backend API is Running</h1>');
+});
+
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 PhotoLab admin API running on http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 PhotoLab admin API running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
 // Watcher trigger
