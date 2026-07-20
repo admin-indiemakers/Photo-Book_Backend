@@ -7,16 +7,17 @@ export async function getSummary(req, res, next) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const [ordersToday, orders30d, pendingOrders, totalCustomers, totalProducts, lowStock] = await Promise.all([
+    const [ordersToday, orders30d, allOrders, pendingOrders, totalCustomers, totalProducts, lowStock] = await Promise.all([
       supabase.from('orders').select('id, total', { count: 'exact' }).gte('placed_at', startOfToday),
       supabase.from('orders').select('id, total, status, placed_at').gte('placed_at', thirtyDaysAgo),
+      supabase.from('orders').select('id, total, status', { count: 'exact' }),
       supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('customers').select('id', { count: 'exact', head: true }),
       supabase.from('products').select('id', { count: 'exact', head: true }),
       supabase.from('products').select('id, name, stock_quantity').lt('stock_quantity', 10).eq('is_active', true),
     ]);
 
-    for (const r of [ordersToday, orders30d, pendingOrders, totalCustomers, totalProducts, lowStock]) {
+    for (const r of [ordersToday, orders30d, allOrders, pendingOrders, totalCustomers, totalProducts, lowStock]) {
       if (r.error) throw r.error;
     }
 
@@ -24,6 +25,11 @@ export async function getSummary(req, res, next) {
     const revenue30d = (orders30d.data || [])
       .filter((o) => o.status !== 'cancelled')
       .reduce((sum, o) => sum + Number(o.total), 0);
+      
+    const totalRevenue = (allOrders.data || [])
+      .filter((o) => o.status !== 'cancelled')
+      .reduce((sum, o) => sum + Number(o.total), 0);
+    const totalOrders = allOrders.count || 0;
 
     // Build a day-by-day series for the last 14 days for the revenue chart.
     const days = [];
@@ -45,6 +51,8 @@ export async function getSummary(req, res, next) {
     }, {});
 
     res.json({
+      total_orders: totalOrders,
+      total_revenue: totalRevenue,
       orders_today: ordersToday.count || 0,
       revenue_today: revenueToday,
       revenue_30d: revenue30d,

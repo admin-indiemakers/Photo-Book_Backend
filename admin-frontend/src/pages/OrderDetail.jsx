@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Truck } from 'lucide-react';
+import { ArrowLeft, Truck, Download } from 'lucide-react';
 import AdminLayout from '../components/Layout/AdminLayout.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import FilmStepper from '../components/FilmStepper.jsx';
+import { jsPDF } from 'jspdf';
 import api from '../lib/api.js';
 
 const NEXT_STATUS = {
@@ -156,20 +157,98 @@ export default function OrderDetail() {
                         View uploaded photo
                       </a>
                     )}
+                    {item.customization?.items && Array.isArray(item.customization.items) && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {item.customization.items.map((customItem, idx) => (
+                          <button
+                            key={idx}
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              const imageUrl = customItem.url || customItem.photo_url;
+                              try {
+                                const response = await fetch(imageUrl);
+                                if (!response.ok) throw new Error('Network response was not ok');
+                                const blob = await response.blob();
+                                const blobUrl = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = blobUrl;
+                                // Extract extension from URL or default to jpg
+                                const ext = imageUrl.split('.').pop()?.split('?')[0] || 'jpg';
+                                a.download = `order-${order.order_number}-photo-${idx + 1}.${ext}`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(blobUrl);
+                                document.body.removeChild(a);
+                              } catch (err) {
+                                console.error('Direct download failed, falling back to new tab:', err);
+                                window.open(imageUrl, '_blank');
+                              }
+                            }}
+                            className="flex items-center gap-1.5 rounded bg-brand-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-brand-600 transition-colors hover:bg-brand-500 hover:text-white"
+                          >
+                            <Download size={12} /> Photo {idx + 1} {customItem.caption ? `("${customItem.caption}")` : ''}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {item.customization?.pdfData && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          const blob = new Blob([JSON.stringify(item.customization.pdfData, null, 2)], { type: 'application/json' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `photobook-layout-${item.id}.json`;
-                          a.click();
+                          const pdfData = item.customization.pdfData;
+                          if (!pdfData || !Array.isArray(pdfData) || pdfData.length === 0) {
+                            alert("No valid layout data found for this product.");
+                            return;
+                          }
+
+                          // We initialize a portrait A4 size roughly (or 600x800 which matches the app default).
+                          const doc = new jsPDF({ unit: 'px', format: [800, 800] });
+
+                          pdfData.forEach((page, index) => {
+                            if (index > 0) doc.addPage();
+                            
+                            // Draw background if any
+                            if (page.background && page.background.value) {
+                              doc.setFillColor(page.background.value);
+                              doc.rect(0, 0, 800, 800, 'F');
+                            }
+
+                            if (page.elements && Array.isArray(page.elements)) {
+                              page.elements.forEach((el) => {
+                                if (el.type === 'image' && el.src) {
+                                  try {
+                                    // Parse rotation if needed, jsPDF does not easily support simple image rotation out of the box without matrix, 
+                                    // but we can just draw the unrotated image at its x, y for admin preview.
+                                    // In a full production app, you'd apply a coordinate transformation matrix here.
+                                    
+                                    // Detect format
+                                    const format = el.src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                                    doc.addImage(el.src, format, el.x || 0, el.y || 0, el.width || 100, el.height || 100);
+                                  } catch (err) {
+                                    console.error('Failed to add image to PDF:', err);
+                                  }
+                                } else if (el.type === 'text' && el.text) {
+                                  try {
+                                    doc.setFontSize(el.fontSize || 24);
+                                    doc.setTextColor(el.fill || '#000000');
+                                    // Adjust Y because jsPDF draws text from the bottom baseline
+                                    doc.text(el.text, el.x || 0, (el.y || 0) + (el.fontSize || 24));
+                                  } catch (err) {}
+                                } else if (el.type === 'shape') {
+                                  try {
+                                    doc.setFillColor(el.fill || '#dddddd');
+                                    doc.rect(el.x || 0, el.y || 0, el.width || 100, el.height || 100, 'F');
+                                  } catch (err) {}
+                                }
+                              });
+                            }
+                          });
+
+                          doc.save(`photobook-layout-${item.id}.pdf`);
                         }}
-                        className="mt-1 inline-block text-xs font-medium text-brand-600 underline"
+                        className="mt-3 flex items-center gap-1.5 rounded bg-brand-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-brand-600 transition-colors hover:bg-brand-500 hover:text-white max-w-fit"
                       >
-                        Download Photobook Layout (JSON)
+                        <Download size={14} /> Download Photobook Layout (PDF)
                       </button>
                     )}
                   </div>

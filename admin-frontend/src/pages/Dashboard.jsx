@@ -57,8 +57,13 @@ export default function Dashboard() {
       title="Overview" 
       subtitle="Executive summary & store performance"
       headerExtra={
-        <button className="flex items-center gap-2 rounded-sm bg-brand-500 px-4 py-2 font-functional text-[11px] font-bold uppercase tracking-widest text-white shadow-soft transition-colors hover:bg-brand-600">
-          Export Data
+        <button 
+          onClick={() => {
+            window.print();
+          }}
+          className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 font-functional text-[11px] font-bold uppercase tracking-widest text-white shadow-md transition-colors hover:bg-ink/80 print:hidden"
+        >
+          Export Data (PDF)
         </button>
       }
     >
@@ -74,10 +79,10 @@ export default function Dashboard() {
           className="space-y-6"
         >
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Daily Revenue" value={formatCurrency(summary.revenue_today)} icon={IndianRupee} accent="brand" />
-            <StatCard label="Orders Today" value={summary.orders_today} icon={ShoppingBag} accent="info" />
+            <StatCard label="Total Revenue" value={formatCurrency(summary.total_revenue)} icon={IndianRupee} accent="success" />
+            <StatCard label="Total Orders" value={summary.total_orders} icon={ShoppingBag} accent="info" />
+            <StatCard label="Orders Today" value={summary.orders_today} icon={ShoppingBag} accent="brand" />
             <StatCard label="Pending Manifests" value={summary.pending_orders} icon={AlertTriangle} accent="warning" />
-            <StatCard label="Total Reach" value={summary.total_customers} icon={Users} accent="success" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

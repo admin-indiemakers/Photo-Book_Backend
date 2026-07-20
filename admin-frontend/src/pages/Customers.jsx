@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminLayout from '../components/Layout/AdminLayout.jsx';
 import api from '../lib/api.js';
@@ -56,7 +56,7 @@ export default function Customers() {
           <div className="col-span-3 font-functional text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">Location</div>
           <div className="col-span-2 font-functional text-[10px] font-semibold uppercase tracking-[0.2em] text-muted text-center">Orders</div>
           <div className="col-span-2 font-functional text-[10px] font-semibold uppercase tracking-[0.2em] text-muted text-right">Lifetime Spend</div>
-          <div className="col-span-1 font-functional text-[10px] font-semibold uppercase tracking-[0.2em] text-muted text-right">Status</div>
+          <div className="col-span-1 font-functional text-[10px] font-semibold uppercase tracking-[0.2em] text-muted text-right">Action</div>
         </div>
 
         <div className="divide-y divide-border/50">
@@ -84,7 +84,7 @@ export default function Customers() {
                     <p className="font-functional text-[11px] text-muted mt-1">{c.email}</p>
                   </div>
                   <div className="col-span-3">
-                    <p className="font-functional text-xs text-ink">{c.city ? `${c.city}, ${c.state}` : '—'}</p>
+                    <p className="font-functional text-xs text-ink">{c.city ? `${c.city}, ${c.state || ''}` : c.phone || 'Location not provided'}</p>
                   </div>
                   <div className="col-span-2 text-center">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-cream font-functional text-xs font-semibold text-ink border border-border">
@@ -95,12 +95,12 @@ export default function Customers() {
                     <p className="font-functional text-sm font-bold text-ink">{formatCurrency(c.total_spent)}</p>
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full ${
-                        c.is_blocked ? 'bg-danger' : 'bg-success'
-                      }`}
-                      title={c.is_blocked ? 'Blocked' : 'Active'}
-                    />
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); navigate(`/customers/${c.id}`); }}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-ink px-2.5 py-1.5 font-functional text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition-colors hover:bg-ink/80"
+                    >
+                      <Eye size={12} /> View
+                    </button>
                   </div>
                 </motion.div>
               ))}

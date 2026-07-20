@@ -55,5 +55,4 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 PhotoLab admin API running on http://localhost:${PORT}`);
 });
-
 // Watcher trigger
