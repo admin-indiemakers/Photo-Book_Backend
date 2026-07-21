@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../config/supabaseClient.js';
 
 // POST /api/auth/login
@@ -9,7 +10,6 @@ export async function login(req, res, next) {
     }
 
     // Create a temporary client just for this login to avoid polluting the global service-role client
-    const { createClient } = await import('@supabase/supabase-js');
     const tempClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false }
     });
