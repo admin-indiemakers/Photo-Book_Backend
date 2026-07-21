@@ -23,10 +23,16 @@ app.use(helmet());
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || origin.startsWith('http://localhost:') || origin === process.env.ADMIN_FRONTEND_URL) {
+      if (
+        !origin || 
+        origin.startsWith('http://localhost:') || 
+        origin === process.env.ADMIN_FRONTEND_URL ||
+        origin.includes('vercel.app')
+      ) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        // Return false instead of an Error so it doesn't crash with a 500
+        callback(null, false);
       }
     },
     credentials: true,
